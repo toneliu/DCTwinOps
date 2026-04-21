@@ -1,0 +1,19 @@
+{
+  "name": "idc-digital-twin-platform",
+  "version": "1.0.0",
+  "description": "Enterprise IDC Digital Twin Integrated Management Platform",
+  "scripts": {
+    "dev": "npm run dev --workspaces",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "start": "docker-compose up",
+    "start:dev": "docker-compose up --build"
+  },
+  "workspaces": [
+    "frontend",
+    "backend/services/*"
+  ],
+  "keywords": ["idc", "digital-twin", "data-center", "management"],
+  "author": "",
+  "license": "ISC"
+}

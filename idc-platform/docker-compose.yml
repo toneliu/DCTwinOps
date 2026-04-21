@@ -1,0 +1,221 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - gateway
+    restart: unless-stopped
+
+  gateway:
+    build: ./backend/services/gateway
+    ports:
+      - "3000:3000"
+    depends_on:
+      - auth-service
+      - twin-service
+      - device-service
+      - network-service
+      - ipam-service
+      - workflow-service
+      - asset-service
+      - monitor-service
+      - report-service
+      - plugin-service
+      - mysql
+      - redis
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - TWIN_SERVICE_URL=http://twin-service:3002
+      - DEVICE_SERVICE_URL=http://device-service:3003
+      - NETWORK_SERVICE_URL=http://network-service:3004
+      - IPAM_SERVICE_URL=http://ipam-service:3005
+      - WORKFLOW_SERVICE_URL=http://workflow-service:3006
+      - ASSET_SERVICE_URL=http://asset-service:3007
+      - MONITOR_SERVICE_URL=http://monitor-service:3008
+      - REPORT_SERVICE_URL=http://report-service:3009
+      - PLUGIN_SERVICE_URL=http://plugin-service:3010
+
+  auth-service:
+    build: ./backend/services/auth
+    depends_on:
+      - mysql
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=idc_platform
+      - JWT_SECRET=supersecretkeyforjwt
+
+  twin-service:
+    build: ./backend/services/twin
+    depends_on:
+      - mysql
+      - mongodb
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=idc_platform
+      - MONGODB_URI=mongodb://mongodb:27017/idc_platform
+
+  device-service:
+    build: ./backend/services/device
+    depends_on:
+      - mysql
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=idc_platform
+
+  network-service:
+    build: ./backend/services/network
+    depends_on:
+      - mysql
+      - redis
+      - kafka
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=idc_platform
+      - REDIS_HOST=redis
+      - KAFKA_BROKERS=kafka:9092
+
+  ipam-service:
+    build: ./backend/services/ipam
+    depends_on:
+      - mysql
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=idc_platform
+
+  workflow-service:
+    build: ./backend/services/workflow
+    depends_on:
+      - mysql
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=idc_platform
+
+  asset-service:
+    build: ./backend/services/asset
+    depends_on:
+      - mysql
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=idc_platform
+
+  monitor-service:
+    build: ./backend/services/monitor
+    depends_on:
+      - mysql
+      - redis
+      - kafka
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=idc_platform
+      - REDIS_HOST=redis
+      - KAFKA_BROKERS=kafka:9092
+
+  report-service:
+    build: ./backend/services/report
+    depends_on:
+      - mysql
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=idc_platform
+
+  plugin-service:
+    build: ./backend/services/plugin
+    depends_on:
+      - mysql
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=idc_platform
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: idc_platform
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+
+  redis:
+    image: redis:7.0
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    restart: unless-stopped
+
+  kafka:
+    image: bitnami/kafka:3.6
+    environment:
+      KAFKA_CFG_NODE_ID: 0
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@kafka:9093
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka-data:/bitnami/kafka
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
+  redis-data:
+  mongodb-data:
+  kafka-data:
