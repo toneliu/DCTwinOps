@@ -1,7 +1,16 @@
 const request = require('supertest');
 const app = require('../index');
+const userModel = require('../models/User');
 
 describe('Auth Service', () => {
+  // 在每个测试前清理数据
+  beforeEach(() => {
+    if (process.env.NODE_ENV === 'test') {
+      userModel.users = [];
+      userModel.nextId = 1;
+    }
+  });
+
   test('should register a new user', async () => {
     const response = await request(app)
       .post('/api/auth/register')
@@ -16,6 +25,16 @@ describe('Auth Service', () => {
   });
 
   test('should login with valid credentials', async () => {
+    // First register user
+    await request(app)
+      .post('/api/auth/register')
+      .send({
+        username: 'testuser',
+        password: 'password123',
+        name: 'Test User',
+        role: 'admin'
+      });
+
     const response = await request(app)
       .post('/api/auth/login')
       .send({
@@ -37,6 +56,17 @@ describe('Auth Service', () => {
   });
 
   test('should return 400 for existing username', async () => {
+    // First register user
+    await request(app)
+      .post('/api/auth/register')
+      .send({
+        username: 'testuser',
+        password: 'password123',
+        name: 'Test User',
+        role: 'admin'
+      });
+
+    // Try to register same user again
     const response = await request(app)
       .post('/api/auth/register')
       .send({
@@ -49,7 +79,17 @@ describe('Auth Service', () => {
   });
 
   test('should get current user info', async () => {
-    // First login to get token
+    // First register user
+    await request(app)
+      .post('/api/auth/register')
+      .send({
+        username: 'testuser',
+        password: 'password123',
+        name: 'Test User',
+        role: 'admin'
+      });
+
+    // Then login to get token
     const loginResponse = await request(app)
       .post('/api/auth/login')
       .send({
